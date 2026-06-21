@@ -1,0 +1,980 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bayt Al-Ilm - Ultimate Digital Library Console</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Inter:wght@300;400;500;600;700&family=Amiri:wght@400;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #061512; color: #e2e8f0; transition: background-color 0.3s, color 0.3s; }
+        .font-serif-islamic { font-family: 'Cinzel', serif; }
+        .font-arabic { font-family: 'Amiri', serif; }
+        
+        /* Light mode overrides toggled via JS */
+        .light-mode { background-color: #f8fafc; color: #0f172a; }
+        .light-mode aside { background-color: #0a2e25; border-right-color: #11473a; }
+        .light-mode header { background-color: rgba(248, 250, 252, 0.9); border-bottom-color: #cbd5e1; color: #0f172a; }
+        .light-mode .bg-card { background-color: #ffffff; border-color: #e2e8f0; color: #0f172a; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+        .light-mode .text-main { color: #0f172a; }
+        .light-mode .text-muted { color: #475569; }
+        .light-mode .bg-main-view { background-color: #f1f5f9; }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #061512; }
+        ::-webkit-scrollbar-thumb { background: #113a30; border-radius: 3px; }
+        
+        .active-nav { background-color: #124036 !important; color: #e5c158 !important; border-left: 4px solid #e5c158; }
+        .light-mode .active-nav { background-color: #e5c158 !important; color: #061512 !important; border-left: 4px solid #061512; }
+    </style>
+</head>
+<body class="flex min-h-screen overflow-x-hidden">
+
+    <!-- PLATFORM NOTIFICATION TOAST -->
+    <div id="toastAlert" class="fixed bottom-5 right-5 bg-[#124036] border border-[#e5c158] text-[#e5c158] px-4 py-3 rounded-xl shadow-2xl z-50 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none flex items-center gap-3">
+        <i class="fa-solid fa-circle-info"></i>
+        <span id="toastMessage" class="text-xs font-medium">System notice executed.</span>
+    </div>
+
+    <!-- GLOBAL INTERACTIVE MODAL -->
+    <div id="globalModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+        <div class="bg-[#0b241f] border border-[#1d5c4e] rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto p-6 md:p-8 space-y-6 relative shadow-2xl transition-all">
+            <button onclick="closeModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white text-xl p-2"><i class="fa-solid fa-xmark"></i></button>
+            <div id="modalContent"></div>
+        </div>
+    </div>
+
+    <!-- LEFT SIDEBAR CONTROL PANEL -->
+    <aside class="w-64 fixed inset-y-0 left-0 bg-[#08221c] border-r border-[#11382f] flex flex-col justify-between p-4 z-30 transition-colors">
+        <div class="space-y-6">
+            <!-- Brand Frame -->
+            <div class="flex items-center gap-3 px-2 py-1 border-b border-[#11382f] pb-4 cursor-pointer" onclick="switchView('home')">
+                <div class="w-10 h-10 bg-[#e5c158] rounded-xl flex items-center justify-center text-[#061512] text-xl shadow-lg">
+                    <i class="fa-solid fa-mosque"></i>
+                </div>
+                <div>
+                    <h2 class="text-sm font-bold text-[#e5c158] uppercase tracking-wider font-serif-islamic">Bayt Al-Ilm</h2>
+                    <p class="text-[9px] text-gray-400 uppercase tracking-widest">Knowledge Engine v4.0</p>
+                </div>
+            </div>
+            
+            <!-- Structural Workspace Links -->
+            <div>
+                <p class="text-[10px] uppercase font-bold text-gray-500 tracking-widest px-3 mb-2">Core Desks</p>
+                <nav class="space-y-1" id="sidebarNav">
+                    <button onclick="switchView('home')" id="nav-home" class="w-full flex items-center justify-between px-4 py-2.5 active-nav text-[#e5c158] font-medium rounded-lg transition text-left">
+                        <span class="flex items-center gap-3"><i class="fa-solid fa-house w-5"></i> Dashboard Home</span>
+                    </button>
+                    <button onclick="switchView('library')" id="nav-library" class="w-full flex items-center gap-3 px-4 py-2.5 text-gray-300 hover:bg-[#0c2b23] hover:text-white rounded-lg transition text-left">
+                        <i class="fa-solid fa-book-open w-5 text-gray-400"></i> Active Library Shelf
+                    </button>
+                    <button onclick="switchView('collections')" id="nav-collections" class="w-full flex items-center gap-3 px-4 py-2.5 text-gray-300 hover:bg-[#0c2b23] hover:text-white rounded-lg transition text-left">
+                        <i class="fa-solid fa-folder-tree w-5 text-gray-400"></i> Curated Archives
+                    </button>
+                    <button onclick="switchView('categories')" id="nav-categories" class="w-full flex items-center gap-3 px-4 py-2.5 text-gray-300 hover:bg-[#0c2b23] hover:text-white rounded-lg transition text-left">
+                        <i class="fa-solid fa-tags w-5 text-gray-400"></i> Subject Categories
+                    </button>
+                    <button onclick="switchView('arrivals')" id="nav-arrivals" class="w-full flex items-center justify-between px-4 py-2.5 text-gray-300 hover:bg-[#0c2b23] hover:text-white rounded-lg transition text-left">
+                        <span class="flex items-center gap-3"><i class="fa-solid fa-clock-rotate-left w-5 text-gray-400"></i> Ingestion History</span>
+                        <span class="bg-[#e5c158] text-black text-[9px] font-bold px-1.5 py-0.5 rounded-md">LIVE</span>
+                    </button>
+                    <button onclick="switchView('bookmarks')" id="nav-bookmarks" class="w-full flex items-center gap-3 px-4 py-2.5 text-gray-300 hover:bg-[#0c2b23] hover:text-white rounded-lg transition text-left">
+                        <i class="fa-solid fa-bookmark w-5 text-gray-400"></i> Saved Verse Pins
+                    </button>
+                    <button onclick="switchView('notes')" id="nav-notes" class="w-full flex items-center justify-between px-4 py-2.5 text-gray-300 hover:bg-[#0c2b23] hover:text-white rounded-lg transition text-left">
+                        <span class="flex items-center gap-3"><i class="fa-solid fa-pen-to-square w-5 text-gray-400"></i> Research Journals</span>
+                        <span id="noteCountBadge" class="bg-[#124036] text-[#e5c158] border border-[#1b5447] text-[10px] px-2 py-0.2 rounded-full font-bold">2</span>
+                    </button>
+                    <button onclick="switchView('community')" id="nav-community" class="w-full flex items-center justify-between px-4 py-2.5 text-gray-300 hover:bg-[#0c2b23] hover:text-white rounded-lg transition text-left">
+                        <span class="flex items-center gap-3"><i class="fa-solid fa-users-rays w-5 text-gray-400"></i> Scholarly Circles</span>
+                        <span class="bg-emerald-600 text-white text-[10px] font-bold px-2 py-0.2 rounded-full">Active</span>
+                    </button>
+                    <button onclick="switchView('librarian')" id="nav-librarian" class="w-full flex items-center gap-3 px-4 py-2.5 text-gray-300 hover:bg-[#0c2b23] hover:text-white rounded-lg transition text-left">
+                        <i class="fa-solid fa-headset w-5 text-gray-400"></i> Reference Desk
+                    </button>
+                </nav>
+            </div>
+        </div>
+
+        <!-- Mode & Foot Controls -->
+        <div class="pt-4 border-t border-[#11382f] space-y-3">
+            <div class="flex items-center justify-between px-3 py-2.5 bg-[#051a16] rounded-xl border border-[#11382f]">
+                <span class="text-xs text-gray-300 flex items-center gap-2"><i class="fa-solid fa-circle-half-stroke text-[#e5c158]"></i> Contrast Mode</span>
+                <div onclick="toggleLightMode()" class="w-11 h-6 bg-[#113a30] rounded-full p-0.5 cursor-pointer flex justify-start items-center relative transition-colors" id="modeToggler">
+                    <div class="bg-[#e5c158] w-5 h-5 rounded-full absolute left-0.5 transition-transform duration-200" id="togglerBall"></div>
+                </div>
+            </div>
+            <p class="text-[10px] text-center text-gray-500">System Platform Terminal &middot; 2026</p>
+        </div>
+    </aside>
+
+    <!-- RIGHT CONTAINER WRAPPER -->
+    <div class="flex-1 pl-64 flex flex-col min-h-screen">
+        
+        <!-- HEADER MODULE -->
+        <header class="h-16 fixed top-0 right-0 left-64 bg-[#061512]/90 backdrop-blur-md border-b border-[#11382f] flex items-center justify-between px-8 z-40 transition-colors">
+            <div class="flex items-center gap-3 w-1/3">
+                <i class="fa-solid fa-terminal text-[#e5c158] text-xs"></i>
+                <span class="text-xs font-mono text-gray-400 uppercase tracking-widest">Node ID: <span class="text-white font-bold">BYT-PRO-91</span></span>
+            </div>
+
+            <!-- Central Fast Actions -->
+            <div class="flex items-center gap-4 bg-[#0a221c] px-3 py-1 rounded-full border border-[#11382f]">
+                <button onclick="switchView('home')" class="text-xs text-[#e5c158] px-2 py-1 rounded font-medium">Console</button>
+                <button onclick="switchView('library')" class="text-xs text-gray-400 hover:text-white px-2 py-1">Shelf</button>
+                <button onclick="switchView('notes')" class="text-xs text-gray-400 hover:text-white px-2 py-1">Journals</button>
+            </div>
+
+            <!-- Language and User Matrix -->
+            <div class="flex items-center gap-4">
+                <select onchange="changeSystemLanguage(this.value)" class="bg-[#0a221c] border border-[#11382f] rounded-lg text-xs text-gray-300 px-3 py-1.5 outline-none cursor-pointer font-medium hover:border-[#e5c158] transition">
+                    <option value="en">English (EN)</option>
+                    <option value="ar">العربية (AR)</option>
+                    <option value="ms">Bahasa Melayu (MS)</option>
+                </select>
+                <button onclick="showToast('Notification queue cleared. Database index completely up to date.')" class="text-gray-400 hover:text-white relative p-1">
+                    <i class="fa-solid fa-bell"></i>
+                    <span class="absolute top-0 right-0 w-2 h-2 bg-emerald-500 rounded-full"></span>
+                </button>
+                <div onclick="switchView('library')" class="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#e5c158] to-[#f3d47a] text-[#061512] font-bold flex items-center justify-center text-sm cursor-pointer shadow-md transform hover:scale-105 transition">
+                    U
+                </div>
+            </div>
+        </header>
+
+        <!-- MAIN ROUTER MAIN WINDOW DISPLAY -->
+        <main class="pt-24 flex-1 px-8 pb-16 bg-main-view" id="mainViewport">
+            
+            <!-- VIEW: HOME DEFAULT INTERFACES -->
+            <div id="view-home" class="space-y-12 dynamic-view">
+                
+                <!-- MASSIVE HERO DISPLAY WITH MULTI-MODE ROUTERS -->
+                <section class="relative rounded-2xl overflow-hidden border border-[#113a30] bg-gradient-to-b from-[#0a221c] to-[#061512] p-8 md:p-12 shadow-2xl text-center space-y-6">
+                    <div class="inline-flex flex-col items-center border border-[#e5c158]/30 px-6 py-2.5 rounded-2xl bg-[#061512]/90 backdrop-blur-md">
+                        <span class="font-arabic text-[#e5c158] text-2xl tracking-wide">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</span>
+                        <span class="text-[9px] uppercase tracking-widest text-gray-400 font-mono mt-1">Bismillah ir-Rahman ir-Raheem</span>
+                    </div>
+
+                    <div class="space-y-2 max-w-2xl mx-auto">
+                        <h2 class="text-4xl md:text-5xl font-bold text-[#e5c158] tracking-wide font-serif-islamic">Bayt Al-Ilm Platform</h2>
+                        <p class="text-gray-300 text-sm font-light leading-relaxed">An interactive ecosystem engineered for authentic textual cataloging, linguistic research parsing, and multi-lingual verification archives.</p>
+                    </div>
+
+                    <!-- Live Real-Time Multi-Tier Query Filtering Box -->
+                    <div class="max-w-3xl mx-auto bg-white rounded-2xl p-2 flex items-center shadow-2xl border-2 border-transparent focus-within:border-[#e5c158] transition-all">
+                        <div class="flex items-center gap-2 text-gray-400 pl-3">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                        </div>
+                        <input type="text" id="liveSearchInput" onkeyup="handleLiveSearch(event)" placeholder="Search across Title index strings, author naming variants, or subject matrices instantly..." class="w-full bg-transparent text-gray-800 focus:outline-none text-sm px-3 py-2 font-medium" />
+                        <button onclick="triggerSearchAction()" class="bg-[#08221c] hover:bg-[#124036] text-[#e5c158] px-6 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition shadow-md">Execute Engine</button>
+                    </div>
+                    <p id="searchFeedback" class="text-xs text-[#e5c158] hidden bg-[#124036]/50 inline-block px-4 py-1.5 rounded-full font-mono border border-[#e5c158]/20"></p>
+
+                    <!-- Instant Hotkey Category Routers -->
+                    <div class="flex flex-wrap justify-center gap-2 pt-2 text-xs">
+                        <span class="text-gray-400 self-center mr-2 text-[11px] font-mono uppercase">Quick Filters:</span>
+                        <button onclick="filterBooksByCategory('Aqeedah')" class="px-3 py-1.5 bg-[#0a221c] border border-[#113a30] text-gray-300 rounded-xl hover:border-[#e5c158] hover:text-white transition font-medium">Aqeedah</button>
+                        <button onclick="filterBooksByCategory('Hadith')" class="px-3 py-1.5 bg-[#0a221c] border border-[#113a30] text-gray-300 rounded-xl hover:border-[#e5c158] hover:text-white transition font-medium">Hadith</button>
+                        <button onclick="filterBooksByCategory('Fiqh')" class="px-3 py-1.5 bg-[#0a221c] border border-[#113a30] text-gray-300 rounded-xl hover:border-[#e5c158] hover:text-white transition font-medium">Fiqh</button>
+                        <button onclick="filterBooksByCategory('Seerah')" class="px-3 py-1.5 bg-[#0a221c] border border-[#113a30] text-gray-300 rounded-xl hover:border-[#e5c158] hover:text-white transition font-medium">Seerah</button>
+                        <button onclick="filterBooksByCategory('Tafsir')" class="px-3 py-1.5 bg-[#0a221c] border border-[#113a30] text-gray-300 rounded-xl hover:border-[#e5c158] hover:text-white transition font-medium">Tafsir</button>
+                    </div>
+                </section>
+
+                <!-- INTERACTIVE CATEGORY REGISTRY GRID -->
+                <section class="space-y-4">
+                    <div class="flex items-baseline justify-between border-b border-[#11382f] pb-3">
+                        <h3 class="text-xl font-bold font-serif-islamic text-white">Systematic Categorical Registry</h3>
+                        <p class="text-xs text-gray-400 font-mono">Select data node to adjust primary focus</p>
+                    </div>
+                    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4" id="categoriesGrid">
+                        <!-- Loaded dynamically via array looping structure -->
+                    </div>
+                </section>
+
+                <!-- DYNAMIC CORE TEXT BOOKS STACK GRAPH -->
+                <section class="space-y-4">
+                    <div class="flex items-center justify-between border-b border-[#11382f] pb-3">
+                        <div>
+                            <h3 class="text-xl font-bold font-serif-islamic text-white">Curated Reference Monographs</h3>
+                            <p class="text-xs text-gray-400 mt-0.5">Click card to launch structural reader interface workspace</p>
+                        </div>
+                        <button onclick="switchView('library')" class="text-xs text-[#e5c158] hover:underline font-mono flex items-center gap-1">Open Full Manifest <i class="fa-solid fa-arrow-right"></i></button>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6" id="recommendedGrid">
+                        <!-- Populated by JavaScript core manifest objects -->
+                    </div>
+                </section>
+
+                <!-- ADVANCED PLATFORM PROCESSING CAPABILITIES SUITE -->
+                <section class="space-y-4">
+                    <div class="flex items-baseline justify-between border-b border-[#11382f] pb-3">
+                        <h3 class="text-xl font-bold font-serif-islamic text-white">Engine Operations Suite</h3>
+                        <p class="text-xs text-gray-400 font-mono">Click to initialize analytical framework loops</p>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6" id="featuresGrid">
+                        <!-- System functions mapped continuously down below -->
+                    </div>
+                </section>
+            </div>
+
+            <!-- VIEW: GENERIC UNIVERSAL MASTER ROUTER CONTAINER FRAME -->
+            <div id="view-generic" class="space-y-6 hidden dynamic-view">
+                <div class="border-b border-[#11382f] pb-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                    <div>
+                        <button onclick="switchView('home')" class="text-xs text-[#e5c158] hover:underline mb-2 inline-flex items-center gap-1"><i class="fa-solid fa-arrow-left text-[10px]"></i> Return to Main Console</button>
+                        <h2 id="genericTitle" class="text-2xl font-bold font-serif-islamic text-white">Workspace Title</h2>
+                        <p id="genericSubtitle" class="text-xs text-gray-400 mt-1">Detailed structural subtitle trace parameters display tracking.</p>
+                    </div>
+                    <div id="genericViewActions" class="flex items-center gap-2">
+                        <!-- Dynamic Context Control Elements injected here on routing shifts -->
+                    </div>
+                </div>
+                <div id="genericContent" class="min-h-[450px]"></div>
+            </div>
+
+        </main>
+
+        <!-- MASTER PLATFORM FOOTER BLOCK SYSTEM -->
+        <footer class="bg-[#08221c] border-t border-[#11382f] px-8 py-10 mt-auto transition-colors">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <div class="space-y-3">
+                    <div class="flex items-center gap-2">
+                        <div class="w-6 h-6 bg-[#e5c158] rounded flex items-center justify-center text-[#061512] font-bold text-xs shadow">
+                            <i class="fa-solid fa-mosque"></i>
+                        </div>
+                        <span class="font-bold font-serif-islamic text-[#e5c158] text-sm">Bayt Al-Ilm</span>
+                    </div>
+                    <p class="text-xs text-gray-400 leading-relaxed">A specialized dynamic digital layout designed for advanced cross-referencing, semantic categorization, and classical manuscript preservation management tracking arrays.</p>
+                </div>
+                <div class="space-y-2">
+                    <h5 class="text-xs font-bold text-[#e5c158] uppercase tracking-wider font-mono">Index Control Desks</h5>
+                    <ul class="text-xs text-gray-400 space-y-2">
+                        <li><button onclick="switchView('library')" class="hover:text-white transition">Active Work Desk Terminal</button></li>
+                        <li><button onclick="switchView('arrivals')" class="hover:text-white transition">OCR Digitization Feeds</button></li>
+                    </ul>
+                </div>
+                <div class="space-y-2">
+                    <h5 class="text-xs font-bold text-[#e5c158] uppercase tracking-wider font-mono">Analytical Assets</h5>
+                    <ul class="text-xs text-gray-400 space-y-2">
+                        <li><button onclick="switchView('categories')" class="hover:text-white transition">Categorical Index Trees</button></li>
+                        <li><button onclick="switchView('notes')" class="hover:text-white transition">Morphological Logbooks</button></li>
+                    </ul>
+                </div>
+                <div class="space-y-2">
+                    <h5 class="text-xs font-bold text-[#e5c158] uppercase tracking-wider font-mono">Node Architecture</h5>
+                    <ul class="text-xs text-gray-400 space-y-2">
+                        <li><button onclick="showToast('Active Node Sync Protocol: SECURE-TLS-v1.3')" class="hover:text-white transition">Sync Keys & Certificates</button></li>
+                        <li><button onclick="switchView('librarian')" class="hover:text-white transition">Submit Audit Documentation</button></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="border-t border-[#11382f] mt-8 pt-4 flex flex-col md:flex-row items-center justify-between gap-4 text-[11px] text-gray-500 font-mono">
+                <span>System Manifest Stack: Version 4.8.2-Release (June 2026 Build Node)</span>
+                <div class="flex gap-4">
+                    <button onclick="showToast('Security log files verify complete internal integrity.')" class="hover:underline">Integrity Logs</button>
+                    <button onclick="showToast('Open-Source educational prototype design framework layout loaded.')" class="hover:underline">License Agreements</button>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- CORE PLATFORM ENGINE LOGIC CODES SCRIPT FRAMEWORK -->
+    <script>
+        // EXPANDED MOCK DATA DIRECTORIES
+        const BOOKS_DATABASE = [
+            { id: 'b1', romanTitle: 'The Meadows of Divine Love', arabicText: 'روضة المحبين ونزهة المشتاقين', author: 'Imam Ibn Qayyim Al-Jawziyyah', rating: 4.9, category: 'Aqeedah', century: '14th Century (751 AH)', gradient: 'from-emerald-950 to-teal-900', border: 'border-emerald-500/30', textCol: 'text-emerald-300', summary: 'An exceptional structural text navigating spiritual refinement, human emotion parameters, psychology of attachment, and theological guidelines regarding divine love, intention purification, and rectitude according to early traditional authorities.', pages: 380, translationStatus: 'Fully Documented (English Index Integrated)' },
+            { id: 'b2', romanTitle: 'Riyad as-Salihin', arabicText: 'رياض الصالحين من كلام سيد المرسلين', author: 'Imam Abu Zakariya An-Nawawi', rating: 4.8, category: 'Hadith', century: '13th Century (676 AH)', gradient: 'from-blue-950 to-cyan-900', border: 'border-blue-500/30', textCol: 'text-cyan-300', summary: 'The highly revered standard collection of prophetic traditions carefully indexing daily ethics, character formulation, behavioral discipline patterns, ritual guidelines, and foundational parameters of moral execution.', pages: 450, translationStatus: 'Complete Bilingual Mapping Live' },
+            { id: 'b3', romanTitle: 'Chronicles of the Selected Emissaries', arabicText: 'قصص الأنبياء والرسل', author: 'Al-Hafiz Ibn Kathir ad-Dimashqi', rating: 4.7, category: 'Seerah', century: '14th Century (774 AH)', gradient: 'from-amber-950 to-orange-950', border: 'border-orange-500/30', textCol: 'text-orange-300', summary: 'A complete historical chronology logging genealogical histories, tribal transformations, geopolitical occurrences, and systematic verification loops for chronological prophet narratives compiled directly from foundational transmissions.', pages: 620, translationStatus: 'Cross-Referenced Index Active' },
+            { id: 'b4', romanTitle: 'Tafsir Al-Qur\'an Al-Azim', arabicText: 'تفسير القرآن العظيم', author: 'Imam Ismail Ibn Kathir', rating: 4.9, category: 'Tafsir', century: '14th Century (774 AH)', gradient: 'from-purple-950 to-indigo-950', border: 'border-indigo-500/30', textCol: 'text-indigo-300', summary: 'The absolute standard benchmark commentary framework analyzing textual verses through direct cross-text evaluation, parsing historical tracking, linguistic weight structures, and associated validation statements from the companions.', pages: 1420, translationStatus: 'Analytical Index Framework Complete' },
+            { id: 'b5', romanTitle: 'Fortress of the Devout Muslim', arabicText: 'حصن المسلم من أذكار الكتاب والسنة', author: 'Ash-Shaykh Sa\'id Ibn Ali Al-Qahtani', rating: 4.8, category: 'Adab', century: '20th Century (1441 AH)', gradient: 'from-rose-950 to-pink-950', border: 'border-pink-500/30', textCol: 'text-pink-300', summary: 'A universally utilized index arranging specialized targeted invocations, morning and evening shields, protection recitations, and daily phrase alignments structured directly for dynamic research memorization arrays.', pages: 120, translationStatus: 'Interactive Audio Nodes Active' }
+        ];
+
+        const CATEGORIES_DATA = [
+            { name: "Qur'an & Tafsir", key: "Tafsir", icon: "fa-book-quran", count: "1,247 active keys", color: "text-purple-400" },
+            { name: "Hadith Studies", key: "Hadith", icon: "fa-scroll", count: "893 indices verified", color: "text-cyan-400" },
+            { name: "Fiqh & Jurisprudence", key: "Fiqh", icon: "fa-gavel", count: "2,156 text tracks", color: "text-blue-400" },
+            { name: "Seerah & History", key: "Seerah", icon: "fa-timeline", count: "421 catalog matrices", color: "text-orange-400" },
+            { name: "Aqeedah & Creed", key: "Aqeedah", icon: "fa-shield-halved", count: "674 systematic records", color: "text-emerald-400" },
+            { name: "Adab & Ethics", key: "Adab", icon: "fa-heart-pulse", count: "538 document bundles", color: "text-rose-400" }
+        ];
+
+        const FEATURES_DATA = [
+            { title: "Semantic Cross-Parsing Matrix", desc: "Launches natural language inference loops tracking conceptual patterns across distinct historical centuries simultaneously.", icon: "fa-brain", col: "text-emerald-400", moduleCode: "SEM-PARSE-X" },
+            { title: "Quranic Radical Root Grapher", desc: "Constructs direct topological mapping connecting morphosemantic Arabic word roots to contemporary translation queries.", icon: "fa-diagram-project", col: "text-cyan-400", moduleCode: "ROOT-GRAPH-V4" },
+            { title: "Manuscript Neural Character Engine", desc: "Triggers computer vision algorithm parameters calibrated to parse unedited, handwriting-dense historical document scrolls.", icon: "fa-wand-magic-sparkles", col: "text-purple-400", moduleCode: "OCR-MANUSCRIPT" }
+        ];
+
+        // PERSISTED VOLATILE ACTIVE STATE ARRAYS (FOR TRUE LIVE CRUD DATA EDITS)
+        let USER_NOTES_WORKSPACE = [
+            { id: 'n1', title: 'Classical Arabic Syntax Parsing Notes', body: 'Investigating shift patterns across grammatical cases. Need to compile specific entries documenting morphological transformation instances in early texts.', date: '3 mins ago', refCode: 'AR-SYN-26' },
+            { id: 'n2', title: 'Hadith Chain Integrity Compilation Logs', body: 'Documenting regional transmission branches tracking across specific generations of recorders to highlight structural overlap.', date: '2 hours ago', refCode: 'HAD-ISN-88' }
+        ];
+
+        let USER_BOOKMARKED_VERSES = [
+            { id: 'v1', surah: 'Al-Baqarah', verseNum: '2:255', arabic: 'اللَّهُ لَا إِلَٰهَ إِلَّا هُوَ الْحَيُّ الْقَيُّومُ...', note: 'Ayat al-Kursi pinned for primary contextual breakdown tracking loops.' },
+            { id: 'v2', surah: 'Al-Asr', verseNum: '103:1-3', arabic: 'وَالْعَصْرِ &middot; إِنَّ الْإِنسَانَ لَفِي خُسْرٍ...', note: 'Core focus on jurisprudential value framework records.' }
+        ];
+
+        // ON ENTRY COMPONENT INSTANTIATION TRIGGER
+        window.addEventListener('DOMContentLoaded', () => {
+            renderHomeComponents();
+        });
+
+        // RE-RENDER RUNNING DECK FOR HOME CONSOLE DASHBOARD
+        function renderHomeComponents() {
+            // Render Dynamic Categories Grid Elements
+            const catGrid = document.getElementById('categoriesGrid');
+            if (catGrid) {
+                catGrid.innerHTML = CATEGORIES_DATA.map(cat => `
+                    <div onclick="filterBooksByCategory('${cat.key}')" class="bg-[#0b241f] border border-[#133d34] rounded-2xl p-4 text-center hover:border-[#e5c158]/60 hover:bg-[#0c2b23] transition-all duration-300 group cursor-pointer bg-card flex flex-col justify-between items-center min-h-[150px]">
+                        <div class="w-11 h-11 rounded-xl border border-[#1c5649] flex items-center justify-center mb-2 group-hover:bg-[#e5c158]/10 group-hover:border-[#e5c158] transition duration-300">
+                            <i class="fa-solid ${cat.icon} text-lg ${cat.color} group-hover:text-[#e5c158]"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-xs font-serif-islamic text-gray-100 text-main tracking-wide">${cat.name}</h4>
+                            <p class="text-[10px] text-gray-400 mt-1 font-mono text-muted">${cat.count}</p>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            // Render Dynamic Books Stack Manifest Grid Cards
+            const bookGrid = document.getElementById('recommendedGrid');
+            if (bookGrid) {
+                bookGrid.innerHTML = BOOKS_DATABASE.map(book => `
+                    <div onclick="openBookModal('${book.id}')" class="space-y-3 group cursor-pointer transform hover:-translate-y-1 transition-all duration-300">
+                        <div class="bg-gradient-to-br ${book.gradient} border-2 ${book.border} rounded-2xl p-4 aspect-[3/4] flex flex-col justify-between text-center relative shadow-xl group-hover:shadow-[#e5c158]/5 transition-all">
+                            <div class="flex justify-between items-center text-[8px] font-mono tracking-widest ${book.textCol} opacity-80">
+                                <span>INDEX FILE</span>
+                                <span>${book.century}</span>
+                            </div>
+                            <div class="space-y-2 py-2">
+                                <p class="font-arabic text-sm md:text-base text-white/95 leading-relaxed truncate px-1">${book.arabicText}</p>
+                                <h4 class="font-serif-islamic font-bold text-xs text-white tracking-wide line-clamp-2">${book.romanTitle}</h4>
+                            </div>
+                            <p class="text-[9px] font-mono text-white/60 truncate border-t border-white/10 pt-2">${book.author}</p>
+                        </div>
+                        <div class="text-xs space-y-1 px-1">
+                            <h5 class="font-bold text-gray-100 text-main group-hover:text-[#e5c158] transition truncate">${book.romanTitle}</h5>
+                            <p class="text-gray-400 text-[11px] text-muted truncate">${book.author}</p>
+                            <div class="flex items-center gap-1 text-[#e5c158] text-[9px] pt-0.5">
+                                <div class="flex"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i></div>
+                                <span class="text-gray-400 text-muted font-mono font-bold ml-1 text-[10px]">${book.rating}</span>
+                            </div>
+                            <div class="flex gap-2 pt-1">
+                                <span class="bg-[#e5c158]/10 text-[#e5c158] px-2 py-0.2 rounded font-mono text-[9px] font-semibold border border-[#e5c158]/20">${book.category}</span>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            // Render Dynamic Operational Feature Engine Trigger Modules
+            const featGrid = document.getElementById('featuresGrid');
+            if (featGrid) {
+                featGrid.innerHTML = FEATURES_DATA.map(feat => `
+                    <div onclick="openFeatureModal('${feat.title}')" class="bg-[#0b241f] border border-[#133d34] rounded-2xl p-5 space-y-4 hover:border-[#e5c158] transition-all duration-300 cursor-pointer bg-card group flex flex-col justify-between">
+                        <div class="space-y-3">
+                            <div class="w-10 h-10 bg-[#061512] border border-[#1c5649] rounded-xl flex items-center justify-center ${feat.col} group-hover:border-[#e5c158] transition duration-300">
+                                <i class="fa-solid ${feat.icon} text-base"></i>
+                            </div>
+                            <h4 class="font-bold text-sm md:text-base text-gray-100 text-main group-hover:text-[#e5c158] transition">${feat.title}</h4>
+                            <p class="text-xs text-gray-400 leading-relaxed text-muted">${feat.desc}</p>
+                        </div>
+                        <div class="border-t border-[#133d34] pt-3 mt-2 flex items-center justify-between">
+                            <span class="text-[10px] font-mono text-gray-500 uppercase tracking-wider">${feat.moduleCode}</span>
+                            <span class="text-xs text-[#e5c158] font-bold inline-flex items-center gap-1 group-hover:translate-x-1 transition-transform">Initialize <i class="fa-solid fa-arrow-right text-[10px]"></i></span>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        // FULL MASTER ROUTER STATE CONTROLLER FRAMEWORK
+        function switchView(viewName) {
+            // Hide all structural views
+            document.querySelectorAll('.dynamic-view').forEach(v => v.classList.add('hidden'));
+            
+            // Remove navigation highlights
+            document.querySelectorAll('#sidebarNav button').forEach(btn => btn.classList.remove('active-nav'));
+            
+            // Re-apply focus highlight states to active navigation trigger link buttons
+            const activeBtn = document.getElementById(`nav-${viewName}`);
+            if (activeBtn) activeBtn.classList.add('active-nav');
+
+            // Fast breakout exit route mapping handling for Default Home Dashboard Frame
+            if (viewName === 'home') {
+                document.getElementById('view-home').classList.remove('hidden');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                return;
+            }
+
+            // Extract master generic structural component hooks
+            const genericView = document.getElementById('view-generic');
+            const title = document.getElementById('genericTitle');
+            const sub = document.getElementById('genericSubtitle');
+            const content = document.getElementById('genericContent');
+            const actions = document.getElementById('genericViewActions');
+            
+            // Re-zero operational content wrappers before dynamic script execution maps fire
+            actions.innerHTML = "";
+            genericView.classList.remove('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+
+            // DEEP MATRIX WORKSPACE SWITCH CONTROLS
+            switch(viewName) {
+                case 'library':
+                    title.innerText = "Active Library Reference Shelf";
+                    sub.innerText = "Track bookmarked codices, processing metrics, and systemic reading workflows.";
+                    content.innerHTML = `
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                            <div class="bg-[#0b241f] border border-[#11382f] rounded-2xl p-5 space-y-4 bg-card lg:col-span-2">
+                                <h3 class="text-[#e5c158] font-bold font-serif-islamic text-sm uppercase tracking-wider flex items-center gap-2"><i class="fa-solid fa-layer-group"></i> Tracked Reading Manifest Positions</h3>
+                                <div class="divide-y divide-[#11382f] border border-[#11382f] rounded-xl overflow-hidden">
+                                    ${BOOKS_DATABASE.slice(0, 3).map((b, i) => `
+                                        <div class="p-4 flex items-center justify-between hover:bg-[#0c2b23]/40 transition cursor-pointer" onclick="openBookModal('${b.id}')">
+                                            <div class="flex items-center gap-3">
+                                                <div class="w-8 h-10 bg-gradient-to-br ${b.gradient} rounded flex items-center justify-center text-white text-[10px] font-arabic">${i+1}</div>
+                                                <div>
+                                                    <h5 class="font-bold text-xs text-white text-main">${b.romanTitle}</h5>
+                                                    <p class="text-[10px] text-gray-400 text-muted">${b.author}</p>
+                                                </div>
+                                            </div>
+                                            <div class="text-right space-y-1">
+                                                <span class="text-[10px] font-mono text-[#e5c158] bg-[#e5c158]/10 border border-[#e5c158]/20 px-2 py-0.5 rounded">Active Position: Page ${45 + (i * 35)}</span>
+                                                <div class="w-24 bg-[#061512] h-1 rounded-full mt-1"><div class="bg-emerald-500 h-full rounded-full" style="width: ${85 - (i * 25)}%"></div></div>
+                                            </div>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                            <div class="bg-[#0b241f] border border-[#11382f] rounded-2xl p-5 space-y-4 bg-card">
+                                <h3 class="text-white text-main font-bold font-serif-islamic text-sm uppercase tracking-wider flex items-center gap-2"><i class="fa-solid fa-bolt-lightning text-yellow-500"></i> Operations Tracking</h3>
+                                <div class="space-y-3 text-xs font-mono">
+                                    <div class="p-3 bg-[#061512] rounded-xl border border-[#11382f] text-muted flex justify-between items-center">
+                                        <span>System Node Sync Status</span><span class="text-emerald-400 font-bold">100% ONLINE</span>
+                                    </div>
+                                    <div class="p-3 bg-[#061512] rounded-xl border border-[#11382f] text-muted flex justify-between items-center">
+                                        <span>Total Vault Manifest Entries</span><span class="text-white font-bold">5,937 titles</span>
+                                    </div>
+                                    <button onclick="showToast('Initiating deep diagnostic verification sweep across data blocks... All green.')" class="w-full py-2.5 bg-[#124036] hover:bg-[#1b5447] text-[#e5c158] font-bold rounded-xl text-[10px] uppercase tracking-wider transition">Run Core Diagnostic Clean</button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    break;
+
+                case 'collections':
+                    title.innerText = "Curated Classical Archives Manifest";
+                    sub.innerText = "Explore bundled data archives preserved across foundational historic learning institutions.";
+                    content.innerHTML = `
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="bg-[#0b241f] border border-[#11382f] rounded-2xl p-5 flex gap-4 items-start cursor-pointer hover:border-[#e5c158] transition-all bg-card" onclick="openArchiveExplorer('Kutub al-Sittah Compilation Set')">
+                                <div class="w-12 h-12 bg-[#061512] border border-[#11382f] rounded-xl flex items-center justify-center text-2xl text-[#e5c158] shadow-inner"><i class="fa-solid fa-boxes-stacked"></i></div>
+                                <div class="flex-1 space-y-1">
+                                    <h4 class="font-bold text-white text-main font-serif-islamic text-sm md:text-base">The Six Canonical Hadith Framework Compilations</h4>
+                                    <p class="text-xs text-gray-400 text-muted leading-relaxed">Unified metadata access array indexing Sahih al-Bukhari, Sahih Muslim, Sunan an-Nasa'i, Sunan Abu Dawud, Jami\` at-Tirmidhi, and Sunan Ibn Majah volumes tracking chains.</p>
+                                    <span class="text-[10px] text-[#e5c158] font-mono block pt-1 font-bold">Launch Collection Node Bundle &rarr;</span>
+                                </div>
+                            </div>
+                            <div class="bg-[#0b241f] border border-[#11382f] rounded-2xl p-5 flex gap-4 items-start cursor-pointer hover:border-[#e5c158] transition-all bg-card" onclick="openArchiveExplorer('Andalusian Classical Scrolls Index')">
+                                <div class="w-12 h-12 bg-[#061512] border border-[#11382f] rounded-xl flex items-center justify-center text-2xl text-emerald-400 shadow-inner"><i class="fa-solid fa-feather-pointed"></i></div>
+                                <div class="flex-1 space-y-1">
+                                    <h4 class="font-bold text-white text-main font-serif-islamic text-sm md:text-base">Andalusian Scholarly Manuscript Scrolls</h4>
+                                    <p class="text-xs text-gray-400 text-muted leading-relaxed">Rare dynamic high-definition digitizations archiving early jurisprudential fragments and grammatical treaties salvaged from Cordoba structural catalogs.</p>
+                                    <span class="text-[10px] text-[#e5c158] font-mono block pt-1 font-bold">Launch Collection Node Bundle &rarr;</span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    break;
+
+                case 'categories':
+                    title.innerText = "Master Subject Categorical Array Matrix";
+                    sub.innerText = "Select functional division node tracking filters below to manipulate standard catalog sorting lists.";
+                    content.innerHTML = `<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4" id="categoriesViewGrid"></div>`;
+                    setTimeout(() => {
+                        const targetGrid = document.getElementById('categoriesViewGrid');
+                        if (targetGrid) {
+                            targetGrid.innerHTML = CATEGORIES_DATA.map(c => `
+                                <div onclick="filterBooksByCategory('${c.key}')" class="bg-[#0b241f] border border-[#11382f] rounded-2xl p-6 text-center cursor-pointer hover:border-[#e5c158] transition bg-card flex flex-col justify-between items-center min-h-[160px]">
+                                    <i class="fa-solid ${c.icon} ${c.color} text-2xl mb-2"></i>
+                                    <h4 class="font-bold font-serif-islamic text-xs text-white text-main tracking-wide">${c.name}</h4>
+                                    <p class="text-[10px] text-gray-400 text-muted font-mono mt-1 bg-[#061512] border border-[#11382f] px-2 py-0.5 rounded-full w-full truncate">${c.count}</p>
+                                </div>
+                            `).join('');
+                        }
+                    }, 10);
+                    break;
+
+                case 'arrivals':
+                    title.innerText = "System Textual Ingestion Processing History Feed";
+                    sub.innerText = "Real-time logging showing new digital materials verified and added to storage systems over the past 30 days.";
+                    content.innerHTML = `
+                        <div class="space-y-4">
+                            <div class="bg-[#0b241f] border border-[#11382f] rounded-2xl p-4 divide-y divide-[#11382f] bg-card text-xs font-mono">
+                                <div class="py-3 flex justify-between items-center">
+                                    <span class="text-gray-300 text-muted"><i class="fa-solid fa-circle text-[8px] text-emerald-400 mr-2"></i> Synced 5 system layout master structures files matching translation keys</span>
+                                    <span class="text-emerald-400 font-bold bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">SUCCESS</span>
+                                </div>
+                                <div class="py-3 flex justify-between items-center">
+                                    <span class="text-gray-300 text-muted"><i class="fa-solid fa-circle text-[8px] text-yellow-500 mr-2"></i> Ingestion track index match file: Al-Muqaddimah by Ibn Khaldun</span>
+                                    <span class="text-yellow-400 font-bold bg-yellow-500/10 px-2 py-0.5 rounded border border-yellow-500/20">OCR PARSING ACTIVE</span>
+                                </div>
+                                <div class="py-3 flex justify-between items-center">
+                                    <span class="text-gray-300 text-muted"><i class="fa-solid fa-circle text-[8px] text-emerald-400 mr-2"></i> Cross-Referencing alignment verified: Kitab At-Tawheed compilation indices</span>
+                                    <span class="text-emerald-400 font-bold bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">INDEX LOCKED</span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    break;
+
+                case 'bookmarks':
+                    title.innerText = "Saved Verse & Transmission Text Pins";
+                    sub.innerText = "Instantly access specific parsed textual reference items bookmarked during analysis workflows.";
+                    renderBookmarksWorkspace();
+                    break;
+
+                case 'notes':
+                    title.innerText = "Research Journals Workdesk";
+                    sub.innerText = "Create, edit, manipulate, and review custom morphological breakdown worksheets and logs live.";
+                    actions.innerHTML = `
+                        <button onclick="triggerDownloadNotes()" class="bg-[#124036] text-[#e5c158] border border-[#1b5447] text-xs px-3 py-1.5 rounded-xl font-mono hover:bg-[#1b5447] transition">Export Workspace Logs</button>
+                    `;
+                    renderNotesWorkspace();
+                    break;
+
+                case 'community':
+                    title.innerText = "Scholarly Discussion Circles Terminal";
+                    sub.innerText = "Synchronize communication lines with translation groups, verification peers, and reviewers.";
+                    content.innerHTML = `
+                        <div class="space-y-4 max-w-3xl">
+                            <div class="bg-[#0b241f] border border-[#11382f] rounded-2xl p-5 space-y-3 bg-card">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-xs font-bold font-mono text-[#e5c158] uppercase tracking-wider bg-[#124036] px-2.5 py-0.5 rounded border border-[#1c5548]">Peer Review Track Circle #04</span>
+                                    <span class="bg-red-500/10 text-red-400 border border-red-500/20 text-[9px] px-2 py-0.5 rounded font-mono font-bold">2 LIVE ALERTS IN LOGS</span>
+                                </div>
+                                <h4 class="font-bold text-white text-main font-serif-islamic text-sm md:text-base">Isnad Intersect Overlap Analysis Discussion</h4>
+                                <p class="text-xs text-gray-300 text-muted leading-relaxed">Peer group debate verifying biographical crossovers within structural transmissions logs across specific generation chains tracking from early Basra records.</p>
+                                <div class="pt-2">
+                                    <button onclick="openCommunityCircleLog()" class="text-xs bg-[#124036] hover:bg-[#1b5447] text-white px-4 py-2 rounded-xl font-bold transition shadow-md">Enter Peer Workspace Console</button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    break;
+
+                case 'librarian':
+                    title.innerText = "Ask a Reference Librarian Dispatch Node";
+                    sub.innerText = "Direct text dispatch module targeting reference validation checks, source audits, or manual manuscript retrieval tasks.";
+                    content.innerHTML = `
+                        <div class="max-w-xl bg-[#0b241f] border border-[#11382f] rounded-2xl p-6 space-y-4 bg-card mx-auto shadow-2xl">
+                            <h4 class="font-bold text-white text-main font-serif-islamic text-center text-sm uppercase tracking-widest border-b border-[#11382f] pb-3">Submit Data Audit Request Packet</h4>
+                            <div class="space-y-1">
+                                <label class="text-[10px] font-mono text-gray-400 uppercase tracking-wider block">Target Reference Citation/Manuscript Code Signature</label>
+                                <input type="text" id="libQueryCode" placeholder="e.g., MANUSCRIPT-VAL-ANDALUS-091B" class="w-full bg-[#061512] border border-[#11382f] rounded-xl p-3 text-xs text-white focus:outline-none focus:border-[#e5c158] transition" />
+                            </div>
+                            <div class="space-y-1">
+                                <label class="text-[10px] font-mono text-gray-400 uppercase tracking-wider block">Detailed Analysis Query Description</label>
+                                <textarea id="libQueryDesc" rows="4" placeholder="Detail the precise text block cross-verification parameters you require investigated by reference desk specialists..." class="w-full bg-[#061512] border border-[#11382f] rounded-xl p-3 text-xs text-white focus:outline-none focus:border-[#e5c158] transition"></textarea>
+                            </div>
+                            <button onclick="dispatchLibrarianPacket()" class="w-full bg-[#e5c158] hover:bg-[#c9a643] text-[#061512] font-bold py-3 rounded-xl text-xs uppercase tracking-wider transition shadow-md">Dispatch Verification Packet Logs</button>
+                        </div>
+                    `;
+                    break;
+            }
+        }
+
+        // --- SUB-WORKSPACE INJECTION LOGICS (DYNAMIC ACTIONS MAP) ---
+
+        // RESEARCH JOURNALS LOGIC (READ / WRITE / DELETE ACTIONS EXECUTING LIVE)
+        function renderNotesWorkspace() {
+            const container = document.getElementById('genericContent');
+            container.innerHTML = `
+                <div class="space-y-6">
+                    <div class="bg-[#0b241f] border border-[#11382f] rounded-2xl p-5 space-y-4 bg-card shadow-lg">
+                        <h4 class="text-xs font-bold font-mono uppercase text-[#e5c158] tracking-widest">Initialize New Active Log File Entry</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <input type="text" id="noteTitleInput" placeholder="Enter log entry tracking name..." class="bg-[#061512] border border-[#11382f] rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-[#e5c158] md:col-span-1" />
+                            <input type="text" id="noteBodyInput" placeholder="Input analysis, findings, or text notes content here..." class="bg-[#061512] border border-[#11382f] rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-[#e5c158] md:col-span-2" />
+                        </div>
+                        <div class="flex justify-end">
+                            <button onclick="addNewNoteItem()" class="bg-[#e5c158] hover:bg-[#c9a643] text-[#061512] font-bold px-5 py-2.5 rounded-xl text-xs uppercase tracking-wider transition shadow-md">Commit Log File to Disk</button>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="liveNotesGrid">
+                        <!-- Dynamic CRUD list loads here -->
+                    </div>
+                </div>
+            `;
+            updateLiveNotesGrid();
+        }
+
+        function updateLiveNotesGrid() {
+            const grid = document.getElementById('liveNotesGrid');
+            const badge = document.getElementById('noteCountBadge');
+            if (badge) badge.innerText = USER_NOTES_WORKSPACE.length;
+
+            if (USER_NOTES_WORKSPACE.length === 0) {
+                grid.innerHTML = `<div class="col-span-full text-center py-10 text-xs text-gray-500 font-mono border border-dashed border-[#11382f] rounded-2xl">No system workspace journal logs currently tracking. Initialize an entry above.</div>`;
+                return;
+            }
+
+            grid.innerHTML = USER_NOTES_WORKSPACE.map(note => `
+                <div class="bg-[#0b241f] border border-[#11382f] rounded-2xl p-5 space-y-3 bg-card relative shadow group hover:border-[#e5c158]/50 transition-all duration-300">
+                    <button onclick="deleteNoteItem('${note.id}')" class="absolute top-4 right-4 text-gray-500 hover:text-red-400 text-xs opacity-0 group-hover:opacity-100 transition duration-200 p-1"><i class="fa-solid fa-trash-can"></i> Delete</button>
+                    <h4 class="font-bold text-[#e5c158] font-serif-islamic text-sm tracking-wide pr-12">${note.title}</h4>
+                    <p class="text-xs text-gray-300 leading-relaxed text-muted font-normal">${note.body}</p>
+                    <div class="text-[10px] text-gray-500 font-mono pt-2 border-t border-[#11382f] flex justify-between">
+                        <span>Workspace Ref: <span class="text-white">${note.refCode}</span></span>
+                        <span>Tracked: ${note.date}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function addNewNoteItem() {
+            const titleInput = document.getElementById('noteTitleInput');
+            const bodyInput = document.getElementById('noteBodyInput');
+
+            if (!titleInput.value.trim() || !bodyInput.value.trim()) {
+                return showToast('Error: Both dynamic header title and text content fields must be specified.');
+            }
+
+            const newId = 'n-' + Date.now();
+            const randRef = 'USR-' + Math.floor(Math.random() * 900 + 100);
+            
+            USER_NOTES_WORKSPACE.unshift({
+                id: newId,
+                title: titleInput.value.trim(),
+                body: bodyInput.value.trim(),
+                date: 'Just Now',
+                refCode: randRef
+            });
+
+            titleInput.value = "";
+            bodyInput.value = "";
+            updateLiveNotesGrid();
+            showToast('Success: Custom research entry data frames updated on local disk.');
+        }
+
+        function deleteNoteItem(id) {
+            USER_NOTES_WORKSPACE = USER_NOTES_WORKSPACE.filter(n => n.id !== id);
+            updateLiveNotesGrid();
+            showToast('Notice: Structural workspace entry deleted from current active arrays.');
+        }
+
+        function triggerDownloadNotes() {
+            showToast('Export sequence initialized. Transmitting consolidated research package array strings to raw client download stream.');
+        }
+
+        // VERSE BOOKMARKS LOGIC INTERACTIVE WORKSPACE
+        function renderBookmarksWorkspace() {
+            const container = document.getElementById('genericContent');
+            container.innerHTML = `
+                <div class="space-y-6">
+                    <div class="bg-[#0b241f] border border-[#11382f] rounded-2xl p-5 space-y-4 bg-card shadow-lg">
+                        <h4 class="text-xs font-bold font-mono uppercase text-[#e5c158] tracking-widest">Pin Verse to Registry Clipboard</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <input type="text" id="vSurah" placeholder="Surah Title (e.g. Al-Fatiha)..." class="bg-[#061512] border border-[#11382f] rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none" />
+                            <input type="text" id="vNum" placeholder="Verse Reference (e.g. 1:1-7)..." class="bg-[#061512] border border-[#11382f] rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none" />
+                            <input type="text" id="vText" placeholder="Arabic Text characters stream..." class="bg-[#061512] border border-[#11382f] rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none" />
+                        </div>
+                        <div class="flex justify-end"><button onclick="addVerseBookmark()" class="bg-[#e5c158] hover:bg-[#c9a643] text-[#061512] font-bold px-4 py-2.5 rounded-xl text-xs uppercase tracking-wider transition">Clip Text Pin</button></div>
+                    </div>
+                    <div class="space-y-4" id="liveBookmarksContainer"></div>
+                </div>
+            `;
+            updateLiveBookmarksList();
+        }
+
+        function updateLiveBookmarksList() {
+            const container = document.getElementById('liveBookmarksContainer');
+            if(USER_BOOKMARKED_VERSES.length === 0) {
+                container.innerHTML = `<p class="text-center py-10 text-xs text-gray-500 font-mono border border-dashed border-[#11382f] rounded-2xl bg-card">No custom text clips pinned currently.</p>`;
+                return;
+            }
+            container.innerHTML = USER_BOOKMARKED_VERSES.map(v => `
+                <div class="bg-[#0b241f] border border-[#11382f] rounded-2xl p-5 space-y-3 bg-card shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div class="space-y-1 flex-1">
+                        <div class="flex items-center gap-2">
+                            <span class="bg-[#e5c158]/10 text-[#e5c158] border border-[#e5c158]/20 px-2.5 py-0.5 rounded-md font-mono text-[10px] font-bold">${v.surah} &middot; ${v.verseNum}</span>
+                        </div>
+                        <p class="font-arabic text-lg text-white pt-1 text-right md:text-left leading-relaxed">${v.arabic}</p>
+                    </div>
+                    <button onclick="deleteVerseBookmark('${v.id}')" class="text-xs text-gray-500 hover:text-red-400 font-mono self-end md:self-center px-3 py-1 bg-[#061512] rounded-lg border border-[#11382f]">Remove Pin</button>
+                </div>
+            `).join('');
+        }
+
+        function addVerseBookmark() {
+            const surah = document.getElementById('vSurah').value.trim();
+            const num = document.getElementById('vNum').value.trim();
+            const text = document.getElementById('vText').value.trim();
+            if(!surah || !num || !text) return showToast('Error: All textual verification anchor inputs must be declared first.');
+            USER_BOOKMARKED_VERSES.unshift({ id: 'v-'+Date.now(), surah, verseNum: num, arabic: text });
+            document.getElementById('vSurah').value = ""; document.getElementById('vNum').value = ""; document.getElementById('vText').value = "";
+            updateLiveBookmarksList();
+            showToast('Success: Appended new character record stream block pin.');
+        }
+
+        function deleteVerseBookmark(id) {
+            USER_BOOKMARKED_VERSES = USER_BOOKMARKED_VERSES.filter(v => v.id !== id);
+            updateLiveBookmarksList();
+            showToast('Notice: Pin data element deleted.');
+        }
+
+        // DISPATCH PACKETS TO LIBRARIAN 
+        function dispatchLibrarianPacket() {
+            const code = document.getElementById('libQueryCode').value.trim();
+            const desc = document.getElementById('libQueryDesc').value.trim();
+            if(!code || !desc) return showToast('Error: Complete tracking metrics fields prior to dispatch protocol engagement.');
+            showToast(`Packet logged! Query containing context parameters for "${code}" successfully dispatched to verification queue.`);
+            document.getElementById('libQueryCode').value = "";
+            document.getElementById('libQueryDesc').value = "";
+        }
+
+        // OPEN COMMUNITY CHROME CIRCLE LOGS WINDOW DATA BLOCK
+        function openCommunityCircleLog() {
+            const modal = document.getElementById('globalModal');
+            const content = document.getElementById('modalContent');
+            content.innerHTML = `
+                <div class="space-y-4">
+                    <h3 class="text-xl font-bold font-serif-islamic text-[#e5c158]">Circle #04 Sync Session Channel Logs</h3>
+                    <div class="bg-[#061512] border border-[#11382f] rounded-xl p-4 h-64 overflow-y-auto space-y-3 font-mono text-xs text-gray-300">
+                        <p><span class="text-emerald-400">[14:22:11]</span> System Node validation trace established securely via TLS handshake profiles.</p>
+                        <p><span class="text-[#e5c158]">[15:05:42] Reviewer_Al_Mansur:</span> Verifying structural matching arrays across identical biographical log indexes from Damascus data subsets.</p>
+                        <p><span class="text-cyan-400">[16:01:19] User_Terminal_A:</span> Appending custom syntax case alignment markers to shared cloud sheets document tracks.</p>
+                    </div>
+                    <div class="flex gap-2">
+                        <input type="text" id="circleChatMsg" placeholder="Type transmission to channel circle queue logs..." class="bg-[#061512] border border-[#11382f] rounded-xl p-3 text-xs text-white focus:outline-none flex-1" />
+                        <button onclick="showToast('Transmission dispatched to group server array logs.'); document.getElementById('circleChatMsg').value='';" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-5 rounded-xl font-bold uppercase tracking-wider">Send Line</button>
+                    </div>
+                </div>
+            `;
+            modal.classList.remove('hidden'); modal.classList.add('flex');
+        }
+
+        // OPEN DEEP ARCHIVE EXPLORERS FROM MATRIX BUTTONS
+        function openArchiveExplorer(archiveName) {
+            const modal = document.getElementById('globalModal');
+            const content = document.getElementById('modalContent');
+            content.innerHTML = `
+                <div class="space-y-4">
+                    <div class="border-b border-[#1d5c4e] pb-2">
+                        <span class="text-[10px] font-mono text-[#e5c158] uppercase tracking-widest">Active Mounted Bundle Package</span>
+                        <h3 class="text-xl font-bold font-serif-islamic text-white mt-1">${archiveName}</h3>
+                    </div>
+                    <p class="text-xs text-gray-300 leading-relaxed">This bundle aggregates over 40 structured individual texts sub-nodes. Standard search queries run inside the console hero query block down beneath automatically scrape indices contained here.</p>
+                    <div class="bg-[#061512] border border-[#11382f] p-4 rounded-xl space-y-2 text-xs font-mono">
+                        <div class="flex justify-between p-1.5 hover:bg-[#0c2b23] rounded"><span>Volume File 01 (Structural Indices)</span><span class="text-emerald-400 font-bold">READY</span></div>
+                        <div class="flex justify-between p-1.5 hover:bg-[#0c2b23] rounded"><span>Volume File 02 (Cross-Reference Matrix Maps)</span><span class="text-emerald-400 font-bold">READY</span></div>
+                    </div>
+                    <button onclick="closeModal(); showToast('Target database partition selected. Navigation indices mapped.');" class="w-full bg-[#e5c158] text-[#061512] py-2 rounded-xl text-xs font-bold uppercase tracking-wider">Mount Archive Target and Exit</button>
+                </div>
+            `;
+            modal.classList.remove('hidden'); modal.classList.add('flex');
+        }
+
+        // --- GLOBAL CORE UTILITY MODIFIERS AND PLUGINS ENGINE ---
+
+        // DYNAMIC UTILITY MODAL LAUNCH ENGINE (CARD CLICK EVENTS MAP)
+        function openBookModal(id) {
+            const book = BOOKS_DATABASE.find(b => b.id === id);
+            if (!book) return;
+
+            const modal = document.getElementById('globalModal');
+            const content = document.getElementById('modalContent');
+
+            content.innerHTML = `
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="bg-gradient-to-br ${book.gradient} border border-white/20 rounded-2xl p-6 aspect-[3/4] flex flex-col justify-between text-center shadow-2xl">
+                        <p class="text-[9px] uppercase tracking-widest font-mono opacity-70">Bayt Al-Ilm Registry</p>
+                        <div class="space-y-3">
+                            <p class="font-arabic text-2xl text-white leading-relaxed">${book.arabicText}</p>
+                            <h3 class="font-serif-islamic font-bold text-base text-white tracking-wide">${book.romanTitle}</h3>
+                        </div>
+                        <p class="text-[10px] font-mono text-white/80 border-t border-white/10 pt-2">${book.author}</p>
+                    </div>
+                    <div class="md:col-span-2 space-y-4 flex flex-col justify-between">
+                        <div class="space-y-3">
+                            <div class="flex flex-wrap gap-2 items-center">
+                                <span class="bg-[#e5c158]/10 text-[#e5c158] border border-[#e5c158]/30 px-3 py-0.5 rounded-md text-[10px] font-mono font-bold uppercase tracking-wider">${book.category} Segment</span>
+                                <span class="text-gray-400 font-mono text-[11px]">${book.century} Record</span>
+                            </div>
+                            <h2 class="text-2xl font-bold text-white font-serif-islamic text-main tracking-wide mt-1">${book.romanTitle}</h2>
+                            <p class="text-xs text-gray-400 italic text-muted">Author Identity Reference: ${book.author}</p>
+                            
+                            <div class="grid grid-cols-2 gap-4 bg-[#061512] border border-[#1c5649] p-3 rounded-xl font-mono text-[11px] text-gray-300">
+                                <div><span class="text-gray-500 block text-[9px] uppercase">Page Manifest Volume</span><span class="text-white font-bold">${book.pages} structural units</span></div>
+                                <div><span class="text-gray-500 block text-[9px] uppercase">Linguistic Matrix Alignment</span><span class="text-[#e5c158] font-bold">${book.translationStatus}</span></div>
+                            </div>
+                            
+                            <p class="text-xs text-gray-300 leading-relaxed pt-2 border-t border-[#1d5c4e] text-muted">${book.summary}</p>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3 pt-4 border-t border-[#1d5c4e]">
+                            <button onclick="closeModal(); showToast('Digital Text Parsing Work Desk loaded for target monograph reference index.');" class="bg-[#e5c158] hover:bg-[#c9a643] text-[#061512] py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition shadow-md">Open Core Text Reader</button>
+                            <button onclick="closeModal(); showToast('Monograph instance tracking link added directly into active reading session profiles.');" class="border border-[#1d5c4e] text-gray-300 hover:text-white py-3 rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-[#123e35] transition font-medium">Add to Study Shelf</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            modal.classList.remove('hidden'); modal.classList.add('flex');
+        }
+
+        function openFeatureModal(title) {
+            const feat = FEATURES_DATA.find(f => f.title === title);
+            if(!feat) return;
+
+            const modal = document.getElementById('globalModal');
+            const content = document.getElementById('modalContent');
+
+            content.innerHTML = `
+                <div class="space-y-4 text-center py-6 max-w-xl mx-auto">
+                    <div class="w-16 h-16 bg-[#061512] border-2 border-[#e5c158] text-[#e5c158] rounded-2xl flex items-center justify-center text-2xl mx-auto shadow-xl">
+                        <i class="fa-solid fa-microchip"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold font-serif-islamic text-[#e5c158]">${feat.title}</h3>
+                    <p class="text-xs text-gray-400 font-mono">Module Framework Designation State: <span class="text-emerald-400 font-bold bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">READY TO EXECUTE</span></p>
+                    <p class="text-sm text-gray-300 leading-relaxed pt-2 text-muted">${feat.desc} Ready to loop structural test sequences over target index volumes stored on the localized server blocks database nodes.</p>
+                    <div class="pt-6">
+                        <button onclick="closeModal(); showToast('Processing engine module successfully spawned into running threads. Scraping files...');" class="bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-3 rounded-xl text-xs font-bold uppercase tracking-widest transition shadow-lg">Execute Core Processing Engine</button>
+                    </div>
+                </div>
+            `;
+            modal.classList.remove('hidden'); modal.classList.add('flex');
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('globalModal');
+            modal.classList.add('hidden'); modal.classList.remove('flex');
+        }
+
+        // BROWSER FILTERS AND DATA MANIPULATIONS LIVE HOOKS
+        function filterBooksByCategory(catKey) {
+            switchView('home');
+            const filtered = BOOKS_DATABASE.filter(b => b.category.toLowerCase() === catKey.toLowerCase());
+            const feedback = document.getElementById('searchFeedback');
+            
+            if (filtered.length > 0 && feedback) {
+                feedback.innerHTML = `Displaying index matches filtered under category target: <span class="font-bold underline">${catKey}</span> (${filtered.length} entries located). <button onclick="resetFilters()" class="underline ml-2 text-white font-bold hover:text-red-400 font-mono text-[10px]">Clear filter</button>`;
+                feedback.classList.remove('hidden');
+
+                const bookGrid = document.getElementById('recommendedGrid');
+                if (bookGrid) {
+                    bookGrid.innerHTML = filtered.map(book => `
+                        <div onclick="openBookModal('${book.id}')" class="space-y-3 group cursor-pointer border border-[#e5c158]/20 p-2 rounded-2xl bg-[#0b241f]/40">
+                            <div class="bg-gradient-to-br ${book.gradient} border-2 ${book.border} rounded-xl p-4 aspect-[3/4] flex flex-col justify-between text-center relative shadow-lg">
+                                <p class="text-[8px] uppercase tracking-widest ${book.textCol} font-mono">FILTER MATCH</p>
+                                <p class="font-arabic text-base text-white/90 leading-relaxed truncate">${book.arabicText}</p>
+                                <h4 class="font-serif-islamic font-bold text-xs text-white tracking-wide">${book.romanTitle}</h4>
+                                <p class="text-[9px] font-mono text-white/70 truncate">${book.romanAuthor}</p>
+                            </div>
+                            <div class="text-xs space-y-1 px-1">
+                                <h5 class="font-bold text-gray-100 truncate">${book.romanTitle}</h5>
+                                <p class="text-gray-400 text-[11px] truncate">${book.author}</p>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+                window.scrollTo({ top: document.getElementById('recommendedGrid').offsetTop - 120, behavior: 'smooth' });
+            }
+        }
+
+        function resetFilters() {
+            const feedback = document.getElementById('searchFeedback');
+            if (feedback) feedback.classList.add('hidden');
+            const searchInput = document.getElementById('liveSearchInput');
+            if (searchInput) searchInput.value = "";
+            renderHomeComponents();
+            showToast('Catalog view registry filter weights reset back to full data defaults.');
+        }
+
+        // INPUT SEARCH STRING MATRICES PARSER INTERACTION DECK
+        function handleLiveSearch(e) {
+            const val = e.target.value.toLowerCase().trim();
+            const filtered = BOOKS_DATABASE.filter(b => 
+                b.romanTitle.toLowerCase().includes(val) || 
+                b.author.toLowerCase().includes(val) || 
+                b.category.toLowerCase().includes(val)
+            );
+            
+            const bookGrid = document.getElementById('recommendedGrid');
+            if (!bookGrid) return;
+
+            if(filtered.length > 0) {
+                bookGrid.innerHTML = filtered.map(book => `
+                    <div onclick="openBookModal('${book.id}')" class="space-y-3 group cursor-pointer">
+                        <div class="bg-gradient-to-br ${book.gradient} border-2 ${book.border} rounded-xl p-4 aspect-[3/4] flex flex-col justify-between text-center relative shadow-lg">
+                            <p class="text-[8px] uppercase tracking-widest ${book.textCol} font-mono">SEARCH ENGINE MATCH</p>
+                            <p class="font-arabic text-base text-white/90 truncate">${book.arabicText}</p>
+                            <h4 class="font-serif-islamic font-bold text-xs text-white">${book.romanTitle}</h4>
+                            <p class="text-[9px] font-mono text-white/70 truncate">${book.romanAuthor}</p>
+                        </div>
+                        <div class="text-xs space-y-1 px-1">
+                            <h5 class="font-bold text-gray-100 truncate">${book.romanTitle}</h5>
+                        </div>
+                    </div>
+                `).join('');
+            } else {
+                bookGrid.innerHTML = `<div class="col-span-full text-center py-10 text-xs text-gray-500 font-mono border border-dashed border-[#11382f] rounded-2xl bg-card">No matching entry strings detected inside active text structures index paths. Try checking spelling parameters.</div>`;
+            }
+        }
+
+        function triggerSearchAction() {
+            const searchInput = document.getElementById('liveSearchInput');
+            const val = searchInput ? searchInput.value : "";
+            showToast(`Searching directory branches matching query parameters string: "${val}"`);
+        }
+
+        // CONTRAST MODE AND LANGUAGES UTILITY DRIVERS
+        function toggleLightMode() {
+            const body = document.body;
+            const ball = document.getElementById('togglerBall');
+            const toggler = document.getElementById('modeToggler');
+            if (!ball || !toggler) return;
+            
+            body.classList.toggle('light-mode');
+            
+            if(body.classList.contains('light-mode')) {
+                ball.style.transform = "translateX(20px)";
+                toggler.style.backgroundColor = "#e5c158";
+                showToast('Light contrast interface definitions initialized.');
+            } else {
+                ball.style.transform = "translateX(0px)";
+                toggler.style.backgroundColor = "#113a30";
+                showToast('Midnight dark theme contrast interface values restored.');
+            }
+        }
+
+        function changeSystemLanguage(langCode) {
+            showToast(`System localization vectors switched over to focus on target region code: [${langCode.toUpperCase()}]`);
+        }
+
+        // DISPATCH SYSTEM NOTIFICATION TOAST OVERLAYS
+        function showToast(msg) {
+            const toast = document.getElementById('toastAlert');
+            const text = document.getElementById('toastMessage');
+            if (!toast || !text) return;
+
+            text.innerText = msg;
+            toast.classList.remove('translate-y-20', 'opacity-0', 'pointer-events-none');
+            
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0', 'pointer-events-none');
+            }, 3500);
+        }
+    </script>
+</body>
+</html>
