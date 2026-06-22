@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bayt al-Ilm - Next-Gen AI Islamic Library Console</title>
+    <style>
+        /* CSS VARIABLES FOR ACCESSABILITY & PALETTE */
+        :root {
+            --primary-bg: #0b1a13;
+            --surface-bg: rgba(20, 38, 30, 0.85);
+            --sidebar-bg: #07120d;
+            --border-color: rgba(212, 175, 55, 0.3);
+            --text-primary: #f4edd2;
+            --text-secondary: #a3b899;
+            --gold-accent: #d4af37;
+            --gold-glow: rgba(212, 175, 55, 0.35);
+            --card-hover-bg: rgba(30, 58, 45, 0.9);
+            --font-scale: 1rem;
+        }
+
+        /* GEOMETRIC ISLAMIC GRID BACKGROUND */
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--primary-bg);
+            background-image: 
+                radial-gradient(circle at 50% 50%, transparent 45%, var(--primary-bg) 50%),
+                linear-gradient(45deg, rgba(212,175,55,0.02) 25%, transparent 25%, transparent 75%, rgba(212,175,55,0.02) 75%),
+                linear-gradient(45deg, rgba(212,175,55,0.02) 25%, transparent 25%, transparent 75%, rgba(212,175,55,0.02) 75%);
+            background-size: 100% 100%, 40px 40px, 40px 40px;
+            background-position: 0 0, 0 0, 20px 20px;
+            font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
+            font-size: var(--font-scale);
+            color: var(--text-primary);
+            display: flex;
+            min-height: 100vh;
+            box-sizing: border-box;
+            transition: font-size 0.2s ease, background 0.3s;
+        }
+
+        /* SIDEBAR NAVIGATION GRID */
+        aside {
+            width: 280px;
+            background: var(--sidebar-bg);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            box-sizing: border-box;
+            flex-shrink: 0;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding-bottom: 25px;
+            border-bottom: 1px dashed var(--border-color);
+            margin-bottom: 25px;
+        }
+
+        .brand svg {
+            width: 32px;
+            height: 32px;
+            fill: var(--gold-accent);
+        }
+
+        .brand h2 {
+            margin: 0;
+            font-size: 1.3rem;
+            color: var(--gold-accent);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        /* INTUITIVE PLAIN-ENGLISH MENU BUTTONS */
+        .menu-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .menu-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 14px 16px;
+            border-radius: 10px;
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: all 0.2s ease;
+            text-align: left;
+            background: transparent;
+            width: 100%;
+            color: inherit;
+        }
+
+        .menu-item:hover, .menu-item.active {
+            background: rgba(212, 175, 55, 0.1);
+            border-color: var(--border-color);
+        }
+
+        .menu-item .icon {
+            font-size: 1.4rem;
+        }
+
+        .menu-text-box {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .menu-title {
+            font-weight: bold;
+            font-size: 0.95rem;
+            color: var(--text-primary);
+        }
+
+        .menu-desc {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-top: 2px;
+        }
+
+        /* MAIN APP HUB CONTAINER */
+        main {
+            flex-grow: 1;
+            padding: 40px;
+            box-sizing: border-box;
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        /* GLASS CONSOLE LAYOUT */
+        .glass-panel {
+            background: var(--surface-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 2px solid var(--border-color);
+            border-radius: 20px;
+            padding: 35px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5), 0 0 25px var(--gold-glow);
+            margin-bottom: 35px;
+        }
+
+        /* INPUT SEARCH DASHBOARD */
+        .ai-search-box {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 30px;
+        }
+
+        .search-input {
+            flex-grow: 1;
+            background: rgba(0,0,0,0.4);
+            border: 1px solid var(--border-color);
+            padding: 16px;
+            border-radius: 10px;
+            color: #ffffff;
+            font-size: 1.1rem;
+            outline: none;
+            transition: all 0.3s;
+        }
+
+        .search-input:focus {
+            border-color: var(--gold-accent);
+            box-shadow: 0 0 12px var(--gold-glow);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #183e2e, #0e241b);
+            color: var(--gold-accent);
+            border: 1px solid var(--gold-accent);
+            padding: 0 30px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+
+        .btn-primary:hover {
+            background: var(--gold-accent);
+            color: var(--primary-bg);
+            box-shadow: 0 0 15px var(--gold-glow);
+        }
+
+        /* RESPONSE BUCKET GRID (AI OUTPUT ASSISTANT) */
+        .ai-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            margin-top: 25px;
+        }
+
+        .ai-bucket-card {
+            background: rgba(5, 12, 9, 0.7);
+            border: 1px solid rgba(212, 175, 55, 0.15);
+            border-radius: 12px;
+            padding: 20px;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+
+        .ai-bucket-card:hover {
+            transform: translateY(-3px);
+            border-color: var(--gold-accent);
+        }
+
+        .bucket-header {
+            color: var(--gold-accent);
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 12px;
+            font-weight: bold;
+            border-bottom: 1px solid rgba(212, 175, 55, 0.2);
+            padding-bottom: 6px;
+        }
+
+        /* ARABIC MANUSCRIPT CONTENT DESIGN */
+        .arabic-display {
+            font-family: 'Traditional Arabic', 'Amiri', serif;
+            font-size: 1.8rem;
+            color: var(--gold-accent);
+            direction: rtl;
+            line-height: 1.6;
+        }
+
+        /* NETFLIX-STYLE RECOMMENDATION ROWS */
+        .netflix-row {
+            display: flex;
+            gap: 20px;
+            overflow-x: auto;
+            padding: 10px 0 25px 0;
+        }
+
+        .netflix-card {
+            min-width: 200px;
+            background: linear-gradient(145deg, rgba(20, 38, 30, 0.9), rgba(10, 20, 15, 0.9));
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: left;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .netflix-card:hover {
+            transform: scale(1.05);
+            border-color: var(--gold-accent);
+            background: var(--card-hover-bg);
+        }
+
+        .rec-tag {
+            background: rgba(212,175,55,0.15);
+            color: var(--gold-accent);
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: bold;
+            display: inline-block;
+            margin-bottom: 10px;
+        }
+
+        /* OKU FLOATING DISABILITY ACCESS TOOLKIT */
+        .accessibility-suite {
+            position: fixed;
+            bottom: 25px;
+            right: 25px;
+            background: rgba(7, 18, 13, 0.95);
+            border: 2px solid var(--gold-accent);
+            border-radius: 15px;
+            padding: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.7);
+            z-index: 2000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .suite-title {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: var(--gold-accent);
+            margin: 0;
+            font-weight: bold;
+            text-align: center;
+            letter-spacing: 1px;
+        }
+
+        .suite-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .suite-btn {
+            background: #14261e;
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 10px 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+
+        .suite-btn:hover {
+            border-color: var(--gold-accent);
+            color: var(--gold-accent);
+            background: rgba(212,175,55,0.1);
+        }
+
+        /* UTILITY */
+        .hidden-view { display: none; }
+        .text-left { text-align: left !important; }
+        .text-right { text-align: right !important; }
+    </style>
+</head>
+<body>
+
+    <!-- SIDEBAR WITH CLEAR INTUITIVE ENGLISH MICROCOPY -->
+    <aside>
+        <div class="brand">
+            <svg viewBox="0 0 24 24"><path d="M12,2L14.85,5.65L19.35,4.35L18.35,8.85L22,12L18.35,15.15L19.35,19.65L14.85,18.35L12,22L9.15,18.35L4.65,19.65L5.65,15.15L2,12L5.65,8.85L4.65,4.35L9.15,5.65L12,2Z"/></svg>
+            <h2>Bayt Al-Ilm</h2>
+        </div>
+        <div class="menu-list">
+            <button class="menu-item active" onclick="switchTab('search-tab')">
+                <span class="icon">🔍</span>
+                <div class="menu-text-box">
+                    <span class="menu-title">AI Smart Search</span>
+                    <span class="menu-desc">Search Quran, Hadith, & Tafsir</span>
+                </div>
+            </button>
+            <button class="menu-item" onclick="switchTab('ocr-tab')">
+                <span class="icon">📸</span>
+                <div class="menu-text-box">
+                    <span class="menu-title">Scan Text (OCR)</span>
+                    <span class="menu-desc">Digitize old Arabic papers</span>
+                </div>
+            </button>
+            <button class="menu-item" onclick="switchTab('rec-tab')">
+                <span class="icon">📚</span>
+                <div class="menu-text-box">
+                    <span class="menu-title">My Bookshelf</span>
+                    <span class="menu-desc">Personal recommendation feed</span>
+                </div>
+            </button>
+        </div>
+    </aside>
+
+    <!-- MAIN DASHBOARD COMPONENT -->
+    <main>
+        
+        <!-- MODULE 1 & 2: AI SMART ASSISTANT & TOPIC MAPPER -->
+        <div id="search-tab" class="tab-view">
+            <div class="glass-panel">
+                <h1 style="color: var(--gold-accent); margin: 0 0 10px 0;">AI Islamic Search Assistant</h1>
+                <p style="color: var(--text-secondary); margin: 0 0 25px 0;">Ask questions using everyday phrases (e.g., Try searching "patience", "sabar", or "syukur") to map topics instantly.</p>
+                
+                <div class="ai-search-box">
+                    <input type="text" id="userQuery" class="search-input" placeholder="Type a concept or verse topic here...">
+                    <button class="btn-primary" onclick="runAISearch()">SEARCH</button>
+                </div>
+
+                <div id="aiConsoleOutput" class="ai-grid">
+                    <!-- Default State Waiting for Interaction -->
+                    <div style="grid-column: 1/-1; text-align: center; color: var(--text-secondary); padding: 40px 0;">
+                        Enter a query above to explore connected Islamic wisdom parameters.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODULE 4: ARABIC MANUSCRIPT OCR -->
+        <div id="ocr-tab" class="tab-view hidden-view">
+            <div class="glass-panel">
+                <h1 style="color: var(--gold-accent); margin: 0 0 10px 0;">Arabic Manuscript OCR Engine</h1>
+                <p style="color: var(--text-secondary); margin: 0 0 25px 0;">Simulate uploading ancient historical sheets or text to digitize script instantly.</p>
+                
+                <div style="border: 2px dashed var(--border-color); border-radius: 12px; padding: 40px; text-align: center; background: rgba(0,0,0,0.2);">
+                    <p style="margin: 0 0 15px 0; color: var(--text-primary);">Select an historical manuscript page image file</p>
+                    <button class="btn-primary" style="padding: 10px 20px;" onclick="simulateOCR()">SIMULATE IMAGE UPLOAD</button>
+                </div>
+
+                <div id="ocrResults" class="hidden-view" style="margin-top: 30px;">
+                    <h3 style="color: var(--gold-accent);">Digitized Text Success</h3>
+                    <div class="ai-bucket-card text-right">
+                        <div class="bucket-header">Extracted Arabic Typography</div>
+                        <p class="arabic-display">الْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODULE 3: SMART RECOMMENDATION FEED -->
+        <div id="rec-tab" class="tab-view hidden-view">
+            <h1 style="color: var(--gold-accent); margin: 0 0 5px 0;">Recommended For You</h1>
+            <p style="color: var(--text-secondary); margin: 0 0 25px 0;">Based on your activity dashboard preferences, matching trending historical content.</p>
+            
+            <div class="netflix-row">
+                <div class="netflix-card" onclick="alert('Opening: Introduction to Hadith Terminology')">
+                    <span class="rec-tag">98% Match</span>
+                    <h3 style="margin: 0 0 10px 0; color: var(--gold-accent);">Hadith Science</h3>
+                    <p style="margin:0; font-size: 0.85rem; color: var(--text-secondary);">Introduction to traditional narration text criteria chains.</p>
+                </div>
+                <div class="netflix-card" onclick="alert('Opening: Foundations of Islamic Philosophy')">
+                    <span class="rec-tag">Trending</span>
+                    <h3 style="margin: 0 0 10px 0; color: var(--gold-accent);">Philosophy</h3>
+                    <p style="margin:0; font-size: 0.85rem; color: var(--text-secondary);">Mapping structural connections of classic regional preservation logic.</p>
+                </div>
+                <div class="netflix-card" onclick="alert('Opening: Manuscript Preservation Practices')">
+                    <span class="rec-tag">New Content</span>
+                    <h3 style="margin: 0 0 10px 0; color: var(--gold-accent);">Archiving</h3>
+                    <p style="margin:0; font-size: 0.85rem; color: var(--text-secondary);">Advanced techniques for digital handling of historical paper scripts.</p>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- MODULE 5: FLOATING DISABILITY ACCESSIBILITY PANEL (OKU FRIENDLY) -->
+    <div class="accessibility-suite" aria-label="Accessibility Settings">
+        <p class="suite-title">Accessibility Tools</p>
+        <div class="suite-buttons">
+            <button class="suite-btn" onclick="modifyTextScale(0.1)" title="Increase Font Size">A+</button>
+            <button class="suite-btn" onclick="modifyTextScale(-0.1)" title="Decrease Font Size">A-</button>
+            <button class="suite-btn" onclick="toggleHighContrastMode()" title="Toggle High Contrast Display">👁️ Contrast</button>
+            <button class="suite-btn" onclick="readActiveConsoleAloud()" title="Listen via Text-To-Speech">🔊 Speak</button>
+        </div>
+    </div>
+
+    <!-- CORE INTERACTIVE FUNCTIONALITY SCRIPT -->
+    <script>
+        // Tab switching controller
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-view').forEach(view => view.classList.add('hidden-view'));
+            document.querySelectorAll('.menu-item').forEach(item => item.classList.remove('active'));
+            
+            document.getElementById(tabId).classList.remove('hidden-view');
+            event.currentTarget.classList.add('active');
+        }
+
+        // Mock database for AI Topic Mapping and Smart Engine
+        const mockDatabase = {
+            patience: {
+                arabic: "إِنَّ اللَّهَ مَعَ الصَّابِرِينَ",
+                translation: "Indeed, Allah is with the patient. (Surah Al-Baqarah 2:153)",
+                hadith: "The Prophet (ﷺ) said: Cleanliness is half of faith and Al-Hamdu Lillah fills the scale, and patience is a light.",
+                tafsir: "Tafsir Ibn Kathir notes that patience is a protective fortress during trials.",
+                video: "https://www.youtube.com/results?search_query=patience+in+islam",
+                topics: "Sabr, Trust in Allah, Gratitude"
+            },
+            sabar: {
+                arabic: "إِنَّ اللَّه... مَعَ الصَّابِرِينَ",
+                translation: "Sesungguhnya Allah bersama orang-orang yang sabar. (Surah Al-Baqarah 2:153)",
+                hadith: "Hadis Riwayat Bukhari: Tidaklah seorang muslim ditimpa keletihan atau penyakit melainkan Allah menghapuskan kesalahan-kesalahannya.",
+                tafsir: "Ulama menerangkan bahawa sabar itu terbahagi kepada tiga bahagian utama.",
+                video: "https://www.youtube.com/results?search_query=sabar+dalam+islam",
+                topics: "Sabar, Redha, Ketabahan Jiwa"
+            }
+        };
+
+        // Interactive AI Assistant Simulation logic
+        function runAISearch() {
+            const query = document.getElementById('userQuery').value.trim().toLowerCase();
+            const consoleOutput = document.getElementById('aiConsoleOutput');
+            
+            if(!query) {
+                alert("Please enter a keyword into the search console first.");
+                return;
+            }
+
+            // Fallback mapping matching to patience definitions
+            const key = (query.includes('sabar') || query.includes('hadis tentang sabar')) ? 'sabar' : 'patience';
+            const dataset = mockDatabase[key];
+
+            consoleOutput.innerHTML = `
+                <div class="ai-bucket-card text-right" style="grid-column: 1 / -1;">
+                    <div class="bucket-header">Quranic Topic Mapping / Ayat Al-Quran</div>
+                    <p class="arabic-display">${dataset.arabic}</p>
+                    <p class="text-left" style="font-size:0.95rem; font-style:italic; margin-top:10px;">${dataset.translation}</p>
+                </div>
+                <div class="ai-bucket-card">
+                    <div class="bucket-header">Hadith Verified Segment</div>
+                    <p style="font-size:0.9rem; margin:0; line-height:1.5;">${dataset.hadith}</p>
+                </div>
+                <div class="ai-bucket-card">
+                    <div class="bucket-header">Tafsir Analytical Insight</div>
+                    <p style="font-size:0.9rem; margin:0; line-height:1.5;">${dataset.tafsir}</p>
+                </div>
+                <div class="ai-bucket-card">
+                    <div class="bucket-header">Multimedia Media Links</div>
+                    <p style="font-size:0.9rem; margin:0;"><a href="${dataset.video}" target="_blank" style="color:var(--gold-accent); text-decoration:none;">📺 Watch YouTube Video Lectures →</a></p>
+                </div>
+                <div class="ai-bucket-card">
+                    <div class="bucket-header">Related Concepts Map</div>
+                    <p style="font-size:0.9rem; margin:0; color:var(--text-secondary); font-weight:bold;">${dataset.topics}</p>
+                </div>
+            `;
+        }
+
+        // Simulating the OCR manuscript upload engine
+        function simulateOCR() {
+            document.getElementById('ocrResults').classList.remove('hidden-view');
+        }
+
+        // Accessibility Adjuster: Text scaler feature
+        let textScaleFactor = 1.0;
+        function modifyTextScale(modifier) {
+            textScaleFactor += modifier;
+            if(textScaleFactor < 0.8) textScaleFactor = 0.8;
+            if(textScaleFactor > 1.6) textScaleFactor = 1.6;
+            document.documentElement.style.setProperty('--font-scale', textScaleFactor + 'rem');
+        }
+
+        // Accessibility Adjuster: High Contrast Toggle for low vision users
+        let highContrastActive = false;
+        function toggleHighContrastMode() {
+            highContrastActive = !highContrastActive;
+            if(highContrastActive) {
+                document.documentElement.style.setProperty('--primary-bg', '#000000');
+                document.documentElement.style.setProperty('--sidebar-bg', '#111111');
+                document.documentElement.style.setProperty('--surface-bg', '#111111');
+                document.documentElement.style.setProperty('--gold-accent', '#ffff00');
+                document.documentElement.style.setProperty('--text-primary', '#ffffff');
+            } else {
+                document.documentElement.style.setProperty('--primary-bg', '#0b1a13');
+                document.documentElement.style.setProperty('--sidebar-bg', '#07120d');
+                document.documentElement.style.setProperty('--surface-bg', 'rgba(20, 38, 30, 0.85)');
+                document.documentElement.style.setProperty('--gold-accent', '#d4af37');
+                document.documentElement.style.setProperty('--text-primary', '#f4edd2');
+            }
+        }
+
+        // Accessibility Adjuster: Screen reader Speech Synthesis (OKU Audio output)
+        function readActiveConsoleAloud() {
+            if ('speechSynthesis' in window) {
+                // Check if search results are displayed, otherwise read a default welcome string
+                const inputElement = document.getElementById('userQuery');
+                let voiceString = "Welcome to Bayt Al-Ilm Digital Console. Use the smart search bar to find answers.";
+                
+                if (inputElement && inputElement.value) {
+                    voiceString = `Showing results for topic search: ${inputElement.value}. Check your screen for Quran mapping data.`;
+                }
+                
+                const executionUtterance = new SpeechSynthesisUtterance(voiceString);
+                executionUtterance.lang = 'en-US';
+                window.speechSynthesis.speak(executionUtterance);
+            } else {
+                alert("Text-to-Speech functionality is not supported by your current web browser architecture.");
+            }
+        }
+    </script>
+</body>
+</html>
